@@ -1,16 +1,92 @@
-import { useState , useRef} from "react";
+import { useState, useRef } from "react";
 import Header from "./Header";
 import poster from '../assets/poster-bg.jpeg';
-import { checkValidData} from '../utils/validate';
+import { checkValidData } from '../utils/validate';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { updateProfile } from "firebase/auth";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+
+
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBqel6kujCmela7ZD3nJc9eW_XnCXudBtM",
+  authDomain: "netflixgpt-7684d.firebaseapp.com",
+  projectId: "netflixgpt-7684d",
+  storageBucket: "netflixgpt-7684d.appspot.com",
+  messagingSenderId: "1052821090463",
+  appId: "1:1052821090463:web:9ca0321c35947e877a72aa",
+  measurementId: "G-7S3XHKH273"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const email = useRef(null);
   const password = useRef(null);
+  const name = useRef(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [errorMessage, seterrorMessage] = useState(null);
-  const handleButtonClick =()=>{
-       const message=checkValidData(email.current.value,password.current.value);
-       seterrorMessage(message);
+  const handleButtonClick = () => {
+    const message = checkValidData(email.current.value, password.current.value);
+    seterrorMessage(message);
+    if (message) return;
+
+    const auth = getAuth();
+
+
+    if (!isSignInForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: "https://e1.pxfuel.com/desktop-wallpaper/447/176/desktop-wallpaper-gojo-satoru-gojo-pfp.jpg",
+          })
+          .then(() => {
+            navigate("/browse");
+            const { uid, email, displayName, photoURL } = auth.currentUser;
+            dispatch(
+              addUser({
+                uid: uid,
+                email: email,
+                displayName: displayName,
+                photoURL: photoURL,
+              })
+            );
+          })
+            .catch((error) => {
+              seterrorMessage(error.message);
+            });
+        })
+        .catch((error) => {
+          seterrorMessage(error.message);
+        });
+    } else {
+      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
+        .then((userCredential) => {
+
+          const user = userCredential.user;
+          console.log(user);
+          navigate("/browse");
+
+        })
+        .catch((error) => {
+          seterrorMessage(error.message);
+        });
+    }
   }
 
 
@@ -34,6 +110,7 @@ const Login = () => {
 
         {!isSignInForm && (
           <input
+            ref={name}
             type="text"
             placeholder="Full Name"
             className="p-4 my-4 w-full bg-gray-700"
@@ -41,13 +118,13 @@ const Login = () => {
         )}
 
         <input
-        ref={email}
+          ref={email}
           type="text"
           placeholder="Email Address"
           className="p-4 my-4 w-full bg-gray-700"
         />
         <input
-        ref={password}
+          ref={password}
           type="password"
           placeholder="Password"
           className="p-4 my-4 w-full bg-gray-700"

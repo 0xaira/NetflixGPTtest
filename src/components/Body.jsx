@@ -1,8 +1,9 @@
-import React from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import Browse from './Browse'
 import Login from './Login'
+
 const Body = () => {
+
   const appRouter = createBrowserRouter([
     {
       path: '/',
@@ -13,13 +14,16 @@ const Body = () => {
       element: <Browse />,
     },
   ]);
-    return (
-        <div>
-        <RouterProvider router={appRouter}>
+
+
+
+  return (
+    <div>
+      <RouterProvider router={appRouter}>
         <Login />
-        </RouterProvider>
-        </div>
-    )
+      </RouterProvider>
+    </div>
+  )
 }
 
 export default Body
